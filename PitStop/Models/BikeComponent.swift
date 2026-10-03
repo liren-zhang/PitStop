@@ -54,6 +54,7 @@ struct BikeComponent: Identifiable, Codable, Equatable {
 
     // MARK: - Mileage & interval
     var installedMileageKm: Double  // 安装时的里程
+    var installedDate: Date         // 安装日期
     var serviceIntervalKm: Double?  // 建议检查间隔（km）
     var serviceIntervalDays: Int?   // 建议检查间隔（天）
 
@@ -70,6 +71,7 @@ struct BikeComponent: Identifiable, Codable, Equatable {
         name: String,
         category: ComponentCategory,
         installedMileageKm: Double,
+        installedDate: Date = Date(),
         serviceIntervalKm: Double? = nil,
         serviceIntervalDays: Int? = nil,
         technicalDifficulty: Int,
