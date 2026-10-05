@@ -7,16 +7,41 @@
 
 import Foundation
 
-/// Business operation: decide whether a component is due for inspection,
-/// and schedule a task if so.
+/// The current service status of a component.
 ///
-/// A component is due when **either** of its service intervals has been
-/// reached:
-/// - Mileage: `currentMileage - installedMileage >= serviceIntervalKm`
-/// - Time: `now - installedDate >= serviceIntervalDays`
+/// Used by the ViewModel to decide:
+/// - whether to show the component as "ok", "coming up", or "due"
+/// - whether to schedule a task
+/// - whether to fire a notification, and what to say
+enum ServiceStatus: Equatable {
+    /// Still within the interval, no action needed yet.
+    case ok
+
+    /// Approaching the service interval. Show a soft reminder.
+    /// Either value may be nil if the component does not have that interval.
+    case upcoming(daysLeft: Int?, kmLeft: Double?)
+
+    /// The interval has been reached. Schedule the task.
+    case due
+
+    /// The interval was passed some time ago. Highlight in the UI.
+    case overdue(daysPast: Int, kmPast: Double)
+}
+
+/// Business operation: determine the service status of a component and,
+/// when the interval is reached, schedule a maintenance task.
 ///
-/// Whichever comes first triggers the reminder. Mileage is recorded by
-/// the user — the app never guesses how much they ride.
+/// A component has two independent intervals:
+/// - Mileage: `currentMileage - installedMileage`
+/// - Time: `today - installedDate`
+///
+/// Whichever comes first determines the status. Mileage is recorded
+/// manually by the user; the app never guesses daily distance.
+///
+/// A component enters the "upcoming" window when either interval is
+/// within its advance-notice threshold (`advanceNoticeKm` /
+/// `advanceNoticeDays`). This lets the user check the component at their
+/// convenience before the interval is actually reached.
 struct ScheduleMaintenanceUseCase {
 
     private let assessUseCase: AssessServiceOptionUseCase
@@ -30,26 +55,63 @@ struct ScheduleMaintenanceUseCase {
         self.calendar = calendar
     }
 
-    /// Check whether a component has reached either service interval.
-    ///
-    /// - Parameters:
-    ///   - component: The component to check.
-    ///   - bicycle: The bicycle it belongs to (used for the current mileage).
-    /// - Returns: `true` if either interval has been reached or exceeded.
-    func isDue(component: BikeComponent, on bicycle: Bicycle) -> Bool {
-        let kmDue = isMileageDue(component: component, bicycle: bicycle)
-        let timeDue = isTimeDue(component: component)
-        return kmDue || timeDue
+    // MARK: - Status
+
+    /// Return the current service status of a component.
+    func status(for component: BikeComponent, on bicycle: Bicycle) -> ServiceStatus {
+
+        // Mileage side
+        let kmSinceInstall = bicycle.currentMileageKm - component.installedMileageKm
+        let kmLeft: Double? = component.serviceIntervalKm.map { $0 - kmSinceInstall }
+
+        // Time side
+        let daysLeft: Int? = component.serviceIntervalDays.flatMap { days in
+            guard let dueDate = calendar.date(
+                byAdding: .day, value: days, to: component.installedDate
+            ) else { return nil }
+            return calendar.dateComponents([.day], from: Date(), to: dueDate).day
+        }
+
+        // 1. Overdue — either interval has been passed
+        if let k = kmLeft, k < 0 {
+            return .overdue(daysPast: max(0, -(daysLeft ?? 0)), kmPast: -k)
+        }
+        if let d = daysLeft, d < 0 {
+            return .overdue(daysPast: -d, kmPast: max(0, -(kmLeft ?? 0)))
+        }
+
+        // 2. Due — either interval reached exactly
+        if let k = kmLeft, k <= 0 { return .due }
+        if let d = daysLeft, d <= 0 { return .due }
+
+        // 3. Upcoming — within the advance-notice window
+        let kmUpcoming = kmLeft.map { $0 <= component.advanceNoticeKm } ?? false
+        let daysUpcoming = daysLeft.map { $0 <= component.advanceNoticeDays } ?? false
+        if kmUpcoming || daysUpcoming {
+            return .upcoming(daysLeft: daysLeft, kmLeft: kmLeft)
+        }
+
+        // 4. Everything else
+        return .ok
     }
 
-    /// Schedule an inspection for a component if it is due.
+    /// Convenience: is the component currently due or overdue?
+    func isDue(component: BikeComponent, on bicycle: Bicycle) -> Bool {
+        let s = status(for: component, on: bicycle)
+        return s == .due || isOverdue(s)
+    }
+
+    private func isOverdue(_ status: ServiceStatus) -> Bool {
+        if case .overdue = status { return true }
+        return false
+    }
+
+    // MARK: - Scheduling
+
+    /// Schedule an inspection task if the component is due.
     ///
-    /// - Parameters:
-    ///   - component: The component to schedule.
-    ///   - bicycle: The bicycle it belongs to.
-    ///   - existingTasks: All currently scheduled tasks (to prevent duplicates).
-    /// - Returns: A new `MaintenanceTask`, or `nil` if the component is not
-    ///   yet due.
+    /// - Returns: A new task, or `nil` if the component is still in the
+    ///   `ok` or `upcoming` window.
     /// - Throws: `DomainError.duplicateTask` if a task already exists.
     func execute(
         for component: BikeComponent,
@@ -65,7 +127,7 @@ struct ScheduleMaintenanceUseCase {
             throw DomainError.duplicateTask(component: component.name)
         }
 
-        // 2. Only schedule if actually due
+        // 2. Only schedule when actually due or overdue
         guard isDue(component: component, on: bicycle) else {
             return nil
         }
@@ -73,7 +135,7 @@ struct ScheduleMaintenanceUseCase {
         // 3. Determine service level
         let level = try assessUseCase.execute(component: component)
 
-        // 4. Build the task (due immediately since the interval has passed)
+        // 4. Build the task
         return MaintenanceTask(
             bicycleId: bicycle.id,
             componentId: component.id,
@@ -83,25 +145,5 @@ struct ScheduleMaintenanceUseCase {
             isMultiTask: false,
             dueDate: Date()
         )
-    }
-
-    // MARK: - Private
-
-    /// Check the mileage-based interval.
-    private func isMileageDue(component: BikeComponent, bicycle: Bicycle) -> Bool {
-        guard let interval = component.serviceIntervalKm else { return false }
-        let sinceInstall = bicycle.currentMileageKm - component.installedMileageKm
-        return sinceInstall >= interval
-    }
-
-    /// Check the time-based interval.
-    private func isTimeDue(component: BikeComponent) -> Bool {
-        guard let days = component.serviceIntervalDays else { return false }
-        guard let dueDate = calendar.date(
-            byAdding: .day,
-            value: days,
-            to: component.installedDate
-        ) else { return false }
-        return Date() >= dueDate
     }
 }
