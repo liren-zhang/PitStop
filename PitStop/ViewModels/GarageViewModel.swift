@@ -9,33 +9,31 @@ import Foundation
 import Combine
 
 /// ViewModel for the garage screen (the app's home screen).
-///
-/// Owns the list of bicycles and, for each bike, the count of tasks that
-/// are due. This lets the garage show at a glance which bike needs
-/// attention today.
 @MainActor
 final class GarageViewModel: ObservableObject {
 
     // MARK: - Published state
     @Published var bicycles: [Bicycle] = []
-    @Published var dueTaskCounts: [UUID: Int] = [:]   // 每辆车的待办数量
+    @Published var dueTaskCounts: [UUID: Int] = [:]
     @Published var errorMessage: String?
 
     // MARK: - Dependencies
     private let repository: BikeRepository
     private let scheduleUseCase: ScheduleMaintenanceUseCase
+    private let assessUseCase: AssessServiceOptionUseCase
 
     init(
         repository: BikeRepository,
-        scheduleUseCase: ScheduleMaintenanceUseCase = ScheduleMaintenanceUseCase()
+        scheduleUseCase: ScheduleMaintenanceUseCase = ScheduleMaintenanceUseCase(),
+        assessUseCase: AssessServiceOptionUseCase = AssessServiceOptionUseCase()
     ) {
         self.repository = repository
         self.scheduleUseCase = scheduleUseCase
+        self.assessUseCase = assessUseCase
     }
 
     // MARK: - Loading
 
-    /// Load all bicycles and compute the number of due tasks for each.
     func load() {
         errorMessage = nil
         do {
@@ -50,6 +48,10 @@ final class GarageViewModel: ObservableObject {
                 counts[bike.id] = dueCount
             }
             dueTaskCounts = counts
+
+            // Publish the current state so the widget can read it.
+            publishWidgetSnapshot(for: bikes)
+
         } catch {
             errorMessage = "Unable to load your garage. Please try again."
         }
@@ -57,7 +59,6 @@ final class GarageViewModel: ObservableObject {
 
     // MARK: - Mutations
 
-    /// Add a new bicycle.
     func addBicycle(
         name: String,
         brand: String,
@@ -80,7 +81,6 @@ final class GarageViewModel: ObservableObject {
         }
     }
 
-    /// Update the mileage for a bicycle and refresh the due counts.
     func updateMileage(for bicycle: Bicycle, newMileageKm: Double) {
         do {
             try repository.updateMileage(forBicycle: bicycle.id, newMileageKm: newMileageKm)
@@ -90,7 +90,6 @@ final class GarageViewModel: ObservableObject {
         }
     }
 
-    /// Delete a bicycle and everything attached to it.
     func deleteBicycle(_ bicycle: Bicycle) {
         do {
             try repository.deleteBicycle(id: bicycle.id)
@@ -100,8 +99,46 @@ final class GarageViewModel: ObservableObject {
         }
     }
 
-    /// Number of due tasks for a specific bike.
     func dueCount(for bicycle: Bicycle) -> Int {
         dueTaskCounts[bicycle.id] ?? 0
+    }
+
+    // MARK: - Widget snapshot
+
+    /// Build a lightweight snapshot of the current state and write it
+    /// into the App Group container. Called every time `load()` finishes,
+    /// so the widget always reflects the latest data.
+    private func publishWidgetSnapshot(for bikes: [Bicycle]) {
+        var snapshots: [SharedDataManager.BicycleSnapshot] = []
+
+        for bike in bikes {
+            let components = (try? repository.fetchComponents(forBicycle: bike.id)) ?? []
+
+            // Components that are due or overdue.
+            let dueComponents = components.filter {
+                scheduleUseCase.isDue(component: $0, on: bike)
+            }
+
+            // Most urgent service level among the due components.
+            var mostUrgent: ServiceLevel?
+            for c in dueComponents {
+                if let level = try? assessUseCase.execute(component: c) {
+                    if mostUrgent == nil || level.priority > mostUrgent!.priority {
+                        mostUrgent = level
+                    }
+                }
+            }
+
+            snapshots.append(SharedDataManager.BicycleSnapshot(
+                id: bike.id,
+                name: bike.name,
+                dueCount: dueComponents.count,
+                nextTaskTitle: dueComponents.first?.name,
+                nextTaskDue: Date(),
+                mostUrgentLevel: mostUrgent
+            ))
+        }
+
+        SharedDataManager().writeSnapshot(snapshots)
     }
 }
