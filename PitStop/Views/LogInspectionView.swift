@@ -9,18 +9,21 @@ import SwiftUI
 
 /// Screen for recording a single inspection result.
 ///
-/// The user enters a numeric reading (where relevant) and optional notes.
-/// A live preview shows the result immediately, using the same rules the
-/// app will apply when saving.
+/// Two layouts:
+/// - **Measurement mode** — a numeric input with a live preview that
+///   uses the same rules the app applies when saving.
+/// - **Visual mode** — a picker for the four possible results, since
+///   there is no number to measure.
 struct LogInspectionView: View {
 
     @StateObject private var viewModel: InspectionViewModel
     @Environment(\.dismiss) private var dismiss
 
-    init(component: BikeComponent, repository: BikeRepository) {
+    init(component: BikeComponent, bicycle: Bicycle, repository: BikeRepository) {
         _viewModel = StateObject(
             wrappedValue: InspectionViewModel(
                 component: component,
+                bicycle: bicycle,
                 repository: repository
             )
         )
@@ -34,42 +37,17 @@ struct LogInspectionView: View {
                 LabeledContent("Category", value: viewModel.component.category.displayName)
             }
 
-            // MARK: Measurement
-            Section {
-                if viewModel.hasNumericInput {
-                    HStack {
-                        Text("Reading")
-                        Spacer()
-                        TextField("0", text: $viewModel.recordedValueText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 100)
-                            .onChange(of: viewModel.recordedValueText) {
-                                viewModel.updatePreview()
-                            }
-                    }
-                }
-                Text(viewModel.measurementHint)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } header: {
-                Text("Measurement")
+            // MARK: Input (differs by mode)
+            if viewModel.isMeasurementMode {
+                measurementSection
+            } else {
+                visualSection
             }
 
-            // MARK: Live preview
-            if let preview = viewModel.previewResult {
+            // MARK: Preview (measurement only)
+            if viewModel.isMeasurementMode, let preview = viewModel.previewResult {
                 Section("Preview") {
-                    HStack(spacing: 12) {
-                        Image(systemName: iconFor(preview))
-                            .foregroundStyle(colorFor(preview))
-                        VStack(alignment: .leading) {
-                            Text(titleFor(preview))
-                                .font(.headline)
-                            Text(descriptionFor(preview))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                    resultRow(preview)
                 }
             }
 
@@ -107,8 +85,7 @@ struct LogInspectionView: View {
                     Text("Save Inspection")
                         .frame(maxWidth: .infinity)
                 }
-                .disabled(viewModel.recordedValueText.isEmpty &&
-                          viewModel.component.category != .other)
+                .disabled(!canSave)
             }
         }
         .navigationTitle("Log Inspection")
@@ -116,15 +93,84 @@ struct LogInspectionView: View {
         .onAppear { viewModel.loadHistory() }
     }
 
-    // MARK: - Subviews
+    // MARK: - Sections
+
+    private var measurementSection: some View {
+        Section {
+            HStack {
+                Text("Reading")
+                Spacer()
+                TextField("0", text: $viewModel.recordedValueText)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .frame(width: 100)
+                    .onChange(of: viewModel.recordedValueText) {
+                        viewModel.updatePreview()
+                    }
+            }
+            Text(viewModel.measurementHint)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        } header: {
+            Text("Measurement")
+        }
+    }
+
+    private var visualSection: some View {
+        Section {
+            ForEach([InspectionResult.pass, .observe, .actionNeeded, .professional],
+                    id: \.self) { result in
+                Button {
+                    viewModel.selectedResult = result
+                } label: {
+                    HStack {
+                        Image(systemName: iconFor(result))
+                            .foregroundStyle(colorFor(result))
+                            .frame(width: 24)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(titleFor(result))
+                                .font(.body)
+                                .foregroundStyle(.primary)
+                            Text(subtitleFor(result))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if viewModel.selectedResult == result {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(.tint)
+                        }
+                    }
+                }
+            }
+        } header: {
+            Text("Result")
+        } footer: {
+            Text("Pick what you saw during the check.")
+        }
+    }
+
+    // MARK: - Rows
+
+    private func resultRow(_ result: InspectionResult) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: iconFor(result))
+                .foregroundStyle(colorFor(result))
+            VStack(alignment: .leading) {
+                Text(titleFor(result)).font(.headline)
+                Text(subtitleFor(result))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
 
     private func historyRow(_ record: InspectionRecord) -> some View {
         HStack {
             Image(systemName: iconFor(record.result))
                 .foregroundStyle(colorFor(record.result))
             VStack(alignment: .leading) {
-                Text(titleFor(record.result))
-                    .font(.subheadline)
+                Text(titleFor(record.result)).font(.subheadline)
                 Text(record.date, style: .date)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -136,6 +182,15 @@ struct LogInspectionView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    // MARK: - Save gating
+
+    private var canSave: Bool {
+        if viewModel.isMeasurementMode {
+            return !viewModel.recordedValueText.isEmpty
+        }
+        return true   // visual mode always has a selected result
     }
 
     // MARK: - Result formatting
@@ -160,23 +215,48 @@ struct LogInspectionView: View {
 
     private func titleFor(_ result: InspectionResult) -> String {
         switch result {
-        case .pass:         return "Pass"
-        case .observe:      return "Observe"
-        case .actionNeeded: return "Action needed"
-        case .professional: return "Visit a shop"
+        case .pass:         return "All good"
+        case .observe:      return "Keep an eye on it"
+        case .actionNeeded: return "Shop when convenient"
+        case .professional: return "Visit shop now"
         }
     }
 
-    private func descriptionFor(_ result: InspectionResult) -> String {
+    private func subtitleFor(_ result: InspectionResult) -> String {
         switch result {
         case .pass:
-            return "Everything looks fine. No action needed."
+            return "Nothing to do. Next check will start from today."
         case .observe:
-            return "Still usable, but check again soon."
+            return "Still usable, but check again at the next reminder."
         case .actionNeeded:
-            return "Plan a replacement or service in the near future."
+            return "Plan the work soon — not urgent yet."
         case .professional:
-            return "We recommend a professional mechanic for this."
+            return "Deal with this right away. The reminder will stay active."
         }
+    }
+}
+
+#Preview {
+    NavigationStack {
+        LogInspectionView(
+            component: BikeComponent(
+                bicycleId: UUID(),
+                name: "Chain",
+                category: .chain,
+                installedMileageKm: 0,
+                technicalDifficulty: 2,
+                needsSpecialTools: true,
+                needsConsumables: true,
+                estimatedMinutes: 30,
+                isSafetyCritical: false
+            ),
+            bicycle: Bicycle(
+                name: "Test",
+                brand: "Test",
+                drivetrainType: .mechanical,
+                brakeType: .discHydraulic
+            ),
+            repository: AppEnvironment.shared.repository
+        )
     }
 }

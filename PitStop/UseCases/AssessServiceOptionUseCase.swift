@@ -7,28 +7,38 @@
 
 import Foundation
 
-/// Business operation: decide the correct service level for a maintenance
-/// task on a given component.
+/// Business operation: decide whether a component's service can be done
+/// at home, or whether it should go to a shop.
 ///
-/// This is the core decision logic of PitStop. It reflects how cyclists
-/// actually decide where to get work done: most tasks are doable at home,
-/// but some are avoided because of tool cost, consumable cost, time, or
-/// the fact that several tasks are being combined at once.
+/// The decision reflects how cyclists actually think about a job:
+/// - **Can I do it?** (difficulty rating)
+/// - **Do I have what I need?** (tools, consumables)
+/// - **Do I have time?** (estimated minutes)
+/// - **Is it safe to get wrong?** (safety-critical + difficulty)
+///
+/// A shop is only recommended or required when one of those four
+/// conditions fails. Otherwise the work is classified as a DIY job.
 struct AssessServiceOptionUseCase {
 
     /// Assess the service level of a component.
     ///
     /// Rules, applied in order:
-    /// 1. Difficulty 4+, or safety-critical with difficulty 3+ → shop required.
-    /// 2. Needs special tools, or needs consumables, or estimated time over
-    ///    90 minutes, or is part of a multi-task job → shop recommended.
-    /// 3. Difficulty 2 or less → DIY simple.
-    /// 4. Otherwise → DIY with tools.
     ///
-    /// - Parameter component: The component to assess.
-    /// - Returns: The `ServiceLevel` the cyclist should plan for.
-    /// - Throws: `DomainError.incompleteComponentData` if the difficulty
-    ///   value is out of the expected 1–5 range.
+    /// **Shop required** — the job cannot safely or realistically be
+    /// done at home:
+    /// - Difficulty 4 or 5 (needs guidance, or not capable), or
+    /// - Safety-critical and difficulty 3 or above.
+    ///
+    /// **Shop recommended** — doable at home, but the effort makes it
+    /// more sensible to pay a shop:
+    /// - No tools, no consumables, or more than 90 minutes of work.
+    ///
+    /// **DIY simple** — easy, no special tools, no consumables.
+    ///
+    /// **DIY with tools** — anything else.
+    ///
+    /// - Throws: `DomainError.incompleteComponentData` when the difficulty
+    ///   value is outside the 1–5 range.
     func execute(component: BikeComponent) throws -> ServiceLevel {
 
         // 1. Validate the difficulty rating
@@ -39,27 +49,32 @@ struct AssessServiceOptionUseCase {
         }
 
         let difficulty = component.technicalDifficulty
-        let safetyCritical = component.isSafetyCritical
 
-        // 2. Safety-critical and moderately difficult → shop required
-        if difficulty >= 4 || (safetyCritical && difficulty >= 3) {
+        // 2. Shop required — the job is beyond home capability, or it
+        //    is safety-critical and needs care.
+        let tooHard = difficulty >= 4
+        let safetyRisk = component.isSafetyCritical && difficulty >= 3
+        if tooHard || safetyRisk {
             return .shopRequired
         }
 
-        // 3. Shop-recommended conditions
-        let multiTaskPenalty = component.estimatedMinutes > 90
-        if component.needsSpecialTools ||
-           component.needsConsumables ||
-           multiTaskPenalty {
+        // 3. Shop recommended — the job is doable at home but the effort
+        //    or missing items make a shop the better choice.
+        let missingItems = component.needsSpecialTools
+            || component.needsConsumables
+        let tooLong = component.estimatedMinutes > 90
+        if missingItems || tooLong {
             return .shopRecommended
         }
 
-        // 4. Easy DIY
-        if difficulty <= 2 {
+        // 4. DIY simple — quick, no tools, no consumables.
+        if difficulty <= 2
+            && !component.needsSpecialTools
+            && !component.needsConsumables {
             return .diySimple
         }
 
-        // 5. Everything else
+        // 5. Everything else.
         return .diyWithTools
     }
 
@@ -68,9 +83,6 @@ struct AssessServiceOptionUseCase {
     /// Used for a full "big service" that covers several tasks. The result
     /// is the highest level among all components, because the overall job
     /// cannot be easier than its most demanding task.
-    ///
-    /// - Parameter components: The components being serviced together.
-    /// - Returns: The highest `ServiceLevel` among the inputs.
     func combine(components: [BikeComponent]) throws -> ServiceLevel {
         guard !components.isEmpty else {
             throw DomainError.incompleteComponentData(component: "service")

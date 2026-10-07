@@ -16,8 +16,9 @@ import SwiftUI
 struct InspectionGuideView: View {
 
     let component: BikeComponent
+    let bicycle: Bicycle
     let repository: BikeRepository
-
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -56,6 +57,7 @@ struct InspectionGuideView: View {
                 NavigationLink {
                     LogInspectionView(
                         component: component,
+                        bicycle: bicycle,
                         repository: repository
                     )
                 } label: {

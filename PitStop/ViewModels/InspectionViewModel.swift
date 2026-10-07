@@ -10,10 +10,17 @@ import Combine
 
 /// ViewModel for the log-inspection screen.
 ///
-/// Collects the user's measurement for a specific component, calls the
-/// business rules in `LogInspectionUseCase`, and persists the resulting
-/// `InspectionRecord`. Also exposes the inspection history of the
-/// component so the user can see how the value has changed over time.
+/// Supports two inspection modes, decided by the component's category
+/// and the bicycle's configuration:
+///
+/// - **Objective measurement** — the user enters a value (chain wear,
+///   pad thickness, rotor thickness, battery indicator), and
+///   `LogInspectionUseCase` decides the result.
+/// - **Subjective check** — the user picks the result directly
+///   (pass / observe / actionNeeded / professional).
+///
+/// After a successful save, the component's service interval is reset
+/// unless the result was `professional` (see `InspectionResult.resetsInterval`).
 @MainActor
 final class InspectionViewModel: ObservableObject {
 
@@ -21,11 +28,13 @@ final class InspectionViewModel: ObservableObject {
     @Published var recordedValueText: String = ""
     @Published var notes: String = ""
     @Published var previewResult: InspectionResult?
+    @Published var selectedResult: InspectionResult = .pass
     @Published var history: [InspectionRecord] = []
     @Published var errorMessage: String?
 
     // MARK: - Context
     let component: BikeComponent
+    let bicycle: Bicycle
 
     // MARK: - Dependencies
     private let repository: BikeRepository
@@ -33,17 +42,29 @@ final class InspectionViewModel: ObservableObject {
 
     init(
         component: BikeComponent,
+        bicycle: Bicycle,
         repository: BikeRepository,
         logUseCase: LogInspectionUseCase = LogInspectionUseCase()
     ) {
         self.component = component
+        self.bicycle = bicycle
         self.repository = repository
         self.logUseCase = logUseCase
     }
 
+    // MARK: - Mode
+
+    /// How this component should be inspected on this bicycle.
+    var inspectionMethod: InspectionMethod {
+        component.category.inspectionMethod(for: bicycle)
+    }
+
+    var isMeasurementMode: Bool {
+        inspectionMethod == .measurement
+    }
+
     // MARK: - Loading
 
-    /// Load the previous inspection records for this component.
     func loadHistory() {
         do {
             history = try repository.fetchInspections(forComponent: component.id)
@@ -52,11 +73,10 @@ final class InspectionViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Live preview
+    // MARK: - Live preview (measurement mode only)
 
-    /// Called as the user types. Runs the use case to show a live result
-    /// preview before saving.
     func updatePreview() {
+        guard isMeasurementMode else { return }
         errorMessage = nil
         let value = Double(recordedValueText)
         do {
@@ -75,15 +95,26 @@ final class InspectionViewModel: ObservableObject {
 
     // MARK: - Saving
 
-    /// Persist the inspection record.
+    /// Persist the inspection record and, if the result allows it,
+    /// reset the component's service interval.
     /// - Returns: `true` on success, `false` if the input was invalid.
     func save() -> Bool {
-        let value = Double(recordedValueText)
         do {
-            let result = try logUseCase.execute(
-                component: component,
-                measuredValue: value
-            )
+            let result: InspectionResult
+            let value: Double?
+
+            if isMeasurementMode {
+                let typedValue = Double(recordedValueText)
+                result = try logUseCase.execute(
+                    component: component,
+                    measuredValue: typedValue
+                )
+                value = typedValue
+            } else {
+                result = selectedResult
+                value = nil
+            }
+
             let record = InspectionRecord(
                 componentId: component.id,
                 recordedValue: value,
@@ -91,6 +122,15 @@ final class InspectionViewModel: ObservableObject {
                 notes: notes
             )
             try repository.addInspection(record)
+
+            // Reset the interval if the result allows it.
+            let updated = logUseCase.updatedComponentAfterInspection(
+                component,
+                bicycle: bicycle,
+                result: result
+            )
+            try repository.updateComponent(updated)
+
             loadHistory()
             return true
         } catch let error as DomainError {
@@ -102,43 +142,29 @@ final class InspectionViewModel: ObservableObject {
         }
     }
 
-    /// Clear the form after a successful save.
     func resetForm() {
         recordedValueText = ""
         notes = ""
         previewResult = nil
+        selectedResult = .pass
         errorMessage = nil
     }
 
     // MARK: - Derived data
 
     /// Human-readable guidance for the current component's measurement.
-    /// Displayed under the input field so the user knows what to enter.
     var measurementHint: String {
         switch component.category {
         case .chain:
-            return "Enter chain wear percentage (e.g. 0.75). Use a chain checker tool."
+            return "Use a chain checker. It will show one of: new, under 0.5%, 0.5%, 0.75%, or 1.0%."
         case .brakePad:
-            return "Enter pad thickness in mm (e.g. 2.5). Measure the friction material."
+            return "Enter pad thickness in mm (measure the friction material, not the backing plate)."
         case .brakeRotor:
-            return "Enter rotor thickness in mm (e.g. 1.8). Measure at the thinnest point."
+            return "Enter rotor thickness in mm (measure at the thinnest point)."
         case .battery:
-            return "Enter battery indicator (5 = green solid, 4 = green flashing, 3 = yellow solid, 2 = yellow flashing, 1 = red solid, 0 = red flashing)."
-        case .tyre:
-            return "Optional. Enter tread depth in mm, or leave blank for visual check."
+            return "Enter the indicator: 5 = green solid, 4 = green flashing, 3 = yellow solid, 2 = yellow flashing, 1 = red solid, 0 = red flashing."
         default:
-            return "Optional. Enter a numeric reading, or leave blank for a visual check."
-        }
-    }
-
-    /// Whether the input field should be visible at all.
-    /// Some categories are purely visual inspections.
-    var hasNumericInput: Bool {
-        switch component.category {
-        case .chain, .brakePad, .brakeRotor, .battery:
-            return true
-        default:
-            return true   // still allow, but optional
+            return "Enter a numeric reading."
         }
     }
 }

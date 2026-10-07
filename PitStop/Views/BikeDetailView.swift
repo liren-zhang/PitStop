@@ -13,7 +13,10 @@ struct BikeDetailView: View {
 
     @StateObject private var viewModel: BikeDetailViewModel
     @State private var showingAddComponent = false
+    @State private var componentToReplace: BikeComponent?
+    @State private var showingAddRide = false
     @State private var showingMileageEditor = false
+    @State private var addRideText = ""
     @State private var newMileageText = ""
     @State private var selectedComponent: BikeComponent?
 
@@ -28,6 +31,7 @@ struct BikeDetailView: View {
 
     var body: some View {
         List {
+
             // MARK: Mileage
             Section {
                 HStack {
@@ -35,12 +39,26 @@ struct BikeDetailView: View {
                     Spacer()
                     Text("\(Int(viewModel.bicycle.currentMileageKm)) km")
                         .foregroundStyle(.secondary)
-                    Button("Edit") {
-                        newMileageText = String(Int(viewModel.bicycle.currentMileageKm))
-                        showingMileageEditor = true
-                    }
-                    .font(.caption)
                 }
+
+                Button {
+                    addRideText = ""
+                    showingAddRide = true
+                } label: {
+                    Label("Add Ride", systemImage: "plus.circle.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+
+                Button {
+                    newMileageText = String(Int(viewModel.bicycle.currentMileageKm))
+                    showingMileageEditor = true
+                } label: {
+                    Label("Edit Mileage", systemImage: "pencil")
+                        .font(.caption)
+                }
+                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 8, trailing: 16))
             }
 
             // MARK: Components
@@ -57,12 +75,19 @@ struct BikeDetailView: View {
                             componentRow(item)
                         }
                         .buttonStyle(.plain)
-                    }
-                    .onDelete { indexSet in
-                        for index in indexSet {
-                            viewModel.deleteComponent(
-                                viewModel.components[index].component
-                            )
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) {
+                                viewModel.deleteComponent(item.component)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+
+                            Button {
+                                componentToReplace = item.component
+                            } label: {
+                                Label("Replace", systemImage: "arrow.2.squarepath")
+                            }
+                            .tint(.blue)
                         }
                     }
                 }
@@ -89,8 +114,9 @@ struct BikeDetailView: View {
             }
         }
         .sheet(isPresented: $showingAddComponent) {
-            AddComponentSheet { name, category, installedKm, intervalKm, intervalDays,
-                                difficulty, needsTools, needsConsumables, minutes, safety in
+            AddComponentSheet(bicycle: viewModel.bicycle) {
+                name, category, installedKm, intervalKm, intervalDays,
+                difficulty, needsTools, needsConsumables, minutes, safety in
                 viewModel.addComponent(
                     name: name,
                     category: category,
@@ -105,23 +131,55 @@ struct BikeDetailView: View {
                 )
             }
         }
+        .sheet(item: $componentToReplace) { old in
+            AddComponentSheet(bicycle: viewModel.bicycle, initialComponent: old) {
+                name, category, _, intervalKm, intervalDays,
+                difficulty, needsTools, needsConsumables, minutes, safety in
+                viewModel.replaceComponent(
+                    old,
+                    withName: name,
+                    category: category,
+                    installedMileageKm: viewModel.bicycle.currentMileageKm,
+                    serviceIntervalKm: intervalKm,
+                    serviceIntervalDays: intervalDays,
+                    technicalDifficulty: difficulty,
+                    needsSpecialTools: needsTools,
+                    needsConsumables: needsConsumables,
+                    estimatedMinutes: minutes,
+                    isSafetyCritical: safety
+                )
+            }
+        }
         .sheet(item: $selectedComponent) { component in
             InspectionDestination(
                 component: component,
+                bicycle: viewModel.bicycle,
                 repository: AppEnvironment.shared.repository
             )
         }
-        .alert("Update Mileage", isPresented: $showingMileageEditor) {
-            TextField("New mileage (km)", text: $newMileageText)
+        .alert("Add Ride", isPresented: $showingAddRide) {
+            TextField("Distance (km)", text: $addRideText)
+                .keyboardType(.decimalPad)
+            Button("Cancel", role: .cancel) { }
+            Button("Add") {
+                if let value = Double(addRideText) {
+                    viewModel.addRide(value)
+                }
+            }
+        } message: {
+            Text("How far did you ride today?")
+        }
+        .alert("Edit Mileage", isPresented: $showingMileageEditor) {
+            TextField("New total (km)", text: $newMileageText)
                 .keyboardType(.decimalPad)
             Button("Cancel", role: .cancel) { }
             Button("Save") {
                 if let value = Double(newMileageText) {
-                    viewModel.bicycle.currentMileageKm = value
-                    // Note: the repository update happens through GarageViewModel
-                    // in a real flow; here we only update local state for display.
+                    viewModel.updateMileage(value)
                 }
             }
+        } message: {
+            Text("Use this only to correct the total. For daily rides, use Add Ride instead.")
         }
         .onAppear { viewModel.load() }
     }
@@ -221,12 +279,14 @@ struct BikeDetailView: View {
 
 private struct InspectionDestination: View {
     let component: BikeComponent
+    let bicycle: Bicycle
     let repository: BikeRepository
 
     var body: some View {
         NavigationStack {
             InspectionGuideView(
                 component: component,
+                bicycle: bicycle,
                 repository: repository
             )
         }

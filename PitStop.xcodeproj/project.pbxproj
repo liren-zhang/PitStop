@@ -6,6 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		BD15512D3075FDB5004D0C6D /* PitStopModel.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = BD15512B3075FDB5004D0C6D /* PitStopModel.xcdatamodeld */; };
+		BD15513830761D71004D0C6D /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BD15513730761D71004D0C6D /* WidgetKit.framework */; };
+		BD15513A30761D71004D0C6D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BD15513930761D71004D0C6D /* SwiftUI.framework */; };
+		BD15514530761D73004D0C6D /* PitStopWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BD15513530761D71004D0C6D /* PitStopWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		BD15515730762474004D0C6D /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BD15515630762474004D0C6D /* UserNotifications.framework */; };
+		BD15515930762474004D0C6D /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BD15515830762474004D0C6D /* UserNotificationsUI.framework */; };
+		BD15516330762474004D0C6D /* PitStopNotification.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = BD15515530762474004D0C6D /* PitStopNotification.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		BD0FCCEF306F3A140046CFBB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,17 +31,91 @@
 			remoteGlobalIDString = BD0FCCE0306F3A110046CFBB;
 			remoteInfo = PitStop;
 		};
+		BD15514330761D73004D0C6D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BD0FCCD9306F3A110046CFBB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD15513430761D71004D0C6D;
+			remoteInfo = PitStopWidgetExtension;
+		};
+		BD15516130762474004D0C6D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BD0FCCD9306F3A110046CFBB /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BD15515430762474004D0C6D;
+			remoteInfo = PitStopNotification;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BD15514A30761D73004D0C6D /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				BD15514530761D73004D0C6D /* PitStopWidgetExtension.appex in Embed Foundation Extensions */,
+				BD15516330762474004D0C6D /* PitStopNotification.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		BD0FCCE1306F3A110046CFBB /* PitStop.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PitStop.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BD0FCCEE306F3A140046CFBB /* PitStopTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PitStopTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		BD0FCCF8306F3A140046CFBB /* PitStopUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PitStopUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD15512C3075FDB5004D0C6D /* PitStopModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = PitStopModel.xcdatamodel; sourceTree = "<group>"; };
+		BD15513530761D71004D0C6D /* PitStopWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PitStopWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD15513730761D71004D0C6D /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		BD15513930761D71004D0C6D /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		BD15515530762474004D0C6D /* PitStopNotification.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PitStopNotification.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		BD15515630762474004D0C6D /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
+		BD15515830762474004D0C6D /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
+		BD15516E30762A9F004D0C6D /* PitStopWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PitStopWidgetExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		BD15514630761D73004D0C6D /* Exceptions for "PitStopWidget" folder in "PitStopWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = BD15513430761D71004D0C6D /* PitStopWidgetExtension */;
+		};
+		BD15514E30762198004D0C6D /* Exceptions for "PitStop" folder in "PitStopWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/ServiceLevel.swift,
+				Shared/AppGroup.swift,
+				Shared/SharedDataManager.swift,
+			);
+			target = BD15513430761D71004D0C6D /* PitStopWidgetExtension */;
+		};
+		BD15516430762474004D0C6D /* Exceptions for "PitStopNotification" folder in "PitStopNotification" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = BD15515430762474004D0C6D /* PitStopNotification */;
+		};
+		BD15516B30762735004D0C6D /* Exceptions for "PitStop" folder in "PitStopNotification" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/ServiceLevel.swift,
+			);
+			target = BD15515430762474004D0C6D /* PitStopNotification */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		BD0FCCE3306F3A110046CFBB /* PitStop */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BD15514E30762198004D0C6D /* Exceptions for "PitStop" folder in "PitStopWidgetExtension" target */,
+				BD15516B30762735004D0C6D /* Exceptions for "PitStop" folder in "PitStopNotification" target */,
+			);
 			path = PitStop;
 			sourceTree = "<group>";
 		};
@@ -43,6 +127,22 @@
 		BD0FCCFB306F3A140046CFBB /* PitStopUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = PitStopUITests;
+			sourceTree = "<group>";
+		};
+		BD15513B30761D71004D0C6D /* PitStopWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BD15514630761D73004D0C6D /* Exceptions for "PitStopWidget" folder in "PitStopWidgetExtension" target */,
+			);
+			path = PitStopWidget;
+			sourceTree = "<group>";
+		};
+		BD15515A30762474004D0C6D /* PitStopNotification */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				BD15516430762474004D0C6D /* Exceptions for "PitStopNotification" folder in "PitStopNotification" target */,
+			);
+			path = PitStopNotification;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -69,15 +169,38 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BD15513230761D71004D0C6D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BD15513A30761D71004D0C6D /* SwiftUI.framework in Frameworks */,
+				BD15513830761D71004D0C6D /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD15515230762474004D0C6D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BD15515930762474004D0C6D /* UserNotificationsUI.framework in Frameworks */,
+				BD15515730762474004D0C6D /* UserNotifications.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		BD0FCCD8306F3A110046CFBB = {
 			isa = PBXGroup;
 			children = (
+				BD15516E30762A9F004D0C6D /* PitStopWidgetExtension.entitlements */,
+				BD15512B3075FDB5004D0C6D /* PitStopModel.xcdatamodeld */,
 				BD0FCCE3306F3A110046CFBB /* PitStop */,
 				BD0FCCF1306F3A140046CFBB /* PitStopTests */,
 				BD0FCCFB306F3A140046CFBB /* PitStopUITests */,
+				BD15513B30761D71004D0C6D /* PitStopWidget */,
+				BD15515A30762474004D0C6D /* PitStopNotification */,
+				BD15513630761D71004D0C6D /* Frameworks */,
 				BD0FCCE2306F3A110046CFBB /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,8 +211,21 @@
 				BD0FCCE1306F3A110046CFBB /* PitStop.app */,
 				BD0FCCEE306F3A140046CFBB /* PitStopTests.xctest */,
 				BD0FCCF8306F3A140046CFBB /* PitStopUITests.xctest */,
+				BD15513530761D71004D0C6D /* PitStopWidgetExtension.appex */,
+				BD15515530762474004D0C6D /* PitStopNotification.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		BD15513630761D71004D0C6D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				BD15513730761D71004D0C6D /* WidgetKit.framework */,
+				BD15513930761D71004D0C6D /* SwiftUI.framework */,
+				BD15515630762474004D0C6D /* UserNotifications.framework */,
+				BD15515830762474004D0C6D /* UserNotificationsUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -102,10 +238,13 @@
 				BD0FCCDD306F3A110046CFBB /* Sources */,
 				BD0FCCDE306F3A110046CFBB /* Frameworks */,
 				BD0FCCDF306F3A110046CFBB /* Resources */,
+				BD15514A30761D73004D0C6D /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				BD15514430761D73004D0C6D /* PBXTargetDependency */,
+				BD15516230762474004D0C6D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				BD0FCCE3306F3A110046CFBB /* PitStop */,
@@ -163,6 +302,50 @@
 			productReference = BD0FCCF8306F3A140046CFBB /* PitStopUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		BD15513430761D71004D0C6D /* PitStopWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD15514730761D73004D0C6D /* Build configuration list for PBXNativeTarget "PitStopWidgetExtension" */;
+			buildPhases = (
+				BD15513130761D71004D0C6D /* Sources */,
+				BD15513230761D71004D0C6D /* Frameworks */,
+				BD15513330761D71004D0C6D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				BD15513B30761D71004D0C6D /* PitStopWidget */,
+			);
+			name = PitStopWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = PitStopWidgetExtension;
+			productReference = BD15513530761D71004D0C6D /* PitStopWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		BD15515430762474004D0C6D /* PitStopNotification */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BD15516530762474004D0C6D /* Build configuration list for PBXNativeTarget "PitStopNotification" */;
+			buildPhases = (
+				BD15515130762474004D0C6D /* Sources */,
+				BD15515230762474004D0C6D /* Frameworks */,
+				BD15515330762474004D0C6D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				BD15515A30762474004D0C6D /* PitStopNotification */,
+			);
+			name = PitStopNotification;
+			packageProductDependencies = (
+			);
+			productName = PitStopNotification;
+			productReference = BD15515530762474004D0C6D /* PitStopNotification.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +367,12 @@
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = BD0FCCE0306F3A110046CFBB;
 					};
+					BD15513430761D71004D0C6D = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					BD15515430762474004D0C6D = {
+						CreatedOnToolsVersion = 26.2;
+					};
 				};
 			};
 			buildConfigurationList = BD0FCCDC306F3A110046CFBB /* Build configuration list for PBXProject "PitStop" */;
@@ -203,6 +392,8 @@
 				BD0FCCE0306F3A110046CFBB /* PitStop */,
 				BD0FCCED306F3A140046CFBB /* PitStopTests */,
 				BD0FCCF7306F3A140046CFBB /* PitStopUITests */,
+				BD15513430761D71004D0C6D /* PitStopWidgetExtension */,
+				BD15515430762474004D0C6D /* PitStopNotification */,
 			);
 		};
 /* End PBXProject section */
@@ -229,6 +420,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BD15513330761D71004D0C6D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD15515330762474004D0C6D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -236,6 +441,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BD15512D3075FDB5004D0C6D /* PitStopModel.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -247,6 +453,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		BD0FCCF4306F3A140046CFBB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD15513130761D71004D0C6D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BD15515130762474004D0C6D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -265,6 +485,16 @@
 			isa = PBXTargetDependency;
 			target = BD0FCCE0306F3A110046CFBB /* PitStop */;
 			targetProxy = BD0FCCF9306F3A140046CFBB /* PBXContainerItemProxy */;
+		};
+		BD15514430761D73004D0C6D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD15513430761D71004D0C6D /* PitStopWidgetExtension */;
+			targetProxy = BD15514330761D73004D0C6D /* PBXContainerItemProxy */;
+		};
+		BD15516230762474004D0C6D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BD15515430762474004D0C6D /* PitStopNotification */;
+			targetProxy = BD15516130762474004D0C6D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -393,8 +623,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PitStop/PitStop.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X2WPF37SQK;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -424,8 +656,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = PitStop/PitStop.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X2WPF37SQK;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -530,6 +764,126 @@
 			};
 			name = Release;
 		};
+		BD15514830761D73004D0C6D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PitStopWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X2WPF37SQK;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PitStopWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PitStopWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.liren.PitStop.PitStopWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BD15514930761D73004D0C6D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PitStopWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X2WPF37SQK;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PitStopWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PitStopWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.liren.PitStop.PitStopWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		BD15516630762474004D0C6D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = PitStopNotification/PitStopNotification.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X2WPF37SQK;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PitStopNotification/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PitStopNotification;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.liren.PitStop.PitStopNotification;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		BD15516730762474004D0C6D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = PitStopNotification/PitStopNotification.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = X2WPF37SQK;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PitStopNotification/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PitStopNotification;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.liren.PitStop.PitStopNotification;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -569,7 +923,38 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		BD15514730761D73004D0C6D /* Build configuration list for PBXNativeTarget "PitStopWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD15514830761D73004D0C6D /* Debug */,
+				BD15514930761D73004D0C6D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BD15516530762474004D0C6D /* Build configuration list for PBXNativeTarget "PitStopNotification" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BD15516630762474004D0C6D /* Debug */,
+				BD15516730762474004D0C6D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		BD15512B3075FDB5004D0C6D /* PitStopModel.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				BD15512C3075FDB5004D0C6D /* PitStopModel.xcdatamodel */,
+			);
+			currentVersion = BD15512C3075FDB5004D0C6D /* PitStopModel.xcdatamodel */;
+			path = PitStopModel.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = BD0FCCD9306F3A110046CFBB /* Project object */;
 }

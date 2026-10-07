@@ -1,2 +1,48 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24512" systemVersion="25C56" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier=""/>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24512" systemVersion="25C56" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithSwiftData="YES" userDefinedModelVersionIdentifier="">
+    <entity name="CDBicycle" representedClassName="CDBicycle" syncable="YES" codeGenerationType="class">
+        <attribute name="brakeType" attributeType="String"/>
+        <attribute name="brand" optional="YES" attributeType="String"/>
+        <attribute name="createdAt" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="currentMileageKm" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="drivetrainType" attributeType="String"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="name" attributeType="String"/>
+    </entity>
+    <entity name="CDBikeComponent" representedClassName="CDBikeComponent" syncable="YES" codeGenerationType="class">
+        <attribute name="advanceNoticeDays" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="advanceNoticeKm" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="bicycleId" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="category" attributeType="String"/>
+        <attribute name="estimatedMinutes" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="installedDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="installedMileageKm" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="isSafetyCritical" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="name" attributeType="String"/>
+        <attribute name="needsConsumables" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="needsSpecialTools" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="serviceIntervalDays" attributeType="Integer 32" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="serviceIntervalKm" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="technicalDifficulty" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+    </entity>
+    <entity name="CDInspectionRecord" representedClassName="CDInspectionRecord" syncable="YES" codeGenerationType="class">
+        <attribute name="componentId" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="date" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="notes" attributeType="String"/>
+        <attribute name="recordedValue" optional="YES" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
+        <attribute name="result" attributeType="String"/>
+    </entity>
+    <entity name="CDMaintenanceTask" representedClassName="CDMaintenanceTask" syncable="YES" codeGenerationType="class">
+        <attribute name="bicycleId" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="completedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="componentId" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="dueDate" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="id" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="isMultiTask" attributeType="Boolean" usesScalarValueType="YES"/>
+        <attribute name="serviceLevel" attributeType="String"/>
+        <attribute name="taskType" attributeType="String"/>
+        <attribute name="title" attributeType="String"/>
+    </entity>
+</model>

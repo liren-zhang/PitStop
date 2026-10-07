@@ -11,23 +11,30 @@ import Foundation
 
 // MARK: - Test helpers
 
-/// Build a bicycle with a known mileage.
-private func makeBicycle(mileage: Double = 0) -> Bicycle {
+private func makeBicycle(
+    mileage: Double = 0,
+    drivetrain: DrivetrainType = .mechanical,
+    brake: BrakeType = .discHydraulic
+) -> Bicycle {
     Bicycle(
         name: "Test Bike",
         brand: "Test",
-        drivetrainType: .mechanical,
-        brakeType: .discHydraulic,
+        drivetrainType: drivetrain,
+        brakeType: brake,
         currentMileageKm: mileage
     )
 }
 
-/// Build a chain component for tests.
 private func makeChain(
     installedKm: Double = 0,
     intervalKm: Double? = 2000,
     intervalDays: Int? = nil,
-    installedDate: Date = Date()
+    installedDate: Date = Date(),
+    difficulty: Int = 2,
+    needsTools: Bool = true,
+    needsConsumables: Bool = true,
+    minutes: Int = 30,
+    safetyCritical: Bool = false
 ) -> BikeComponent {
     BikeComponent(
         bicycleId: UUID(),
@@ -37,11 +44,11 @@ private func makeChain(
         installedDate: installedDate,
         serviceIntervalKm: intervalKm,
         serviceIntervalDays: intervalDays,
-        technicalDifficulty: 2,
-        needsSpecialTools: true,
-        needsConsumables: true,
-        estimatedMinutes: 30,
-        isSafetyCritical: false
+        technicalDifficulty: difficulty,
+        needsSpecialTools: needsTools,
+        needsConsumables: needsConsumables,
+        estimatedMinutes: minutes,
+        isSafetyCritical: safetyCritical
     )
 }
 
@@ -52,14 +59,22 @@ struct LogInspectionTests {
 
     let useCase = LogInspectionUseCase()
 
-    /// A chain at 0.75% wear should be flagged as action needed.
     @Test func chainAtPointSevenFivePercent_returnsActionNeeded() throws {
-        let chain = makeChain()
-        let result = try useCase.execute(component: chain, measuredValue: 0.75)
+        let result = try useCase.execute(component: makeChain(), measuredValue: 0.75)
         #expect(result == .actionNeeded)
     }
 
-    /// A brake pad under 1 mm should be escalated to a shop.
+    @Test func chainFullyWorn_returnsProfessional() throws {
+        let result = try useCase.execute(component: makeChain(), measuredValue: 1.0)
+        #expect(result == .professional)
+    }
+
+    @Test func chainWearAboveMaximum_throwsValueOutOfRange() throws {
+        #expect(throws: DomainError.self) {
+            _ = try useCase.execute(component: makeChain(), measuredValue: 2.0)
+        }
+    }
+
     @Test func brakePadUnderOneMillimetre_returnsProfessional() throws {
         let pad = BikeComponent(
             bicycleId: UUID(),
@@ -76,15 +91,6 @@ struct LogInspectionTests {
         #expect(result == .professional)
     }
 
-    /// A chain wear value above 1.5% is not physically plausible.
-    @Test func chainWearAboveMaximum_throwsValueOutOfRange() throws {
-        let chain = makeChain()
-        #expect(throws: DomainError.self) {
-            _ = try useCase.execute(component: chain, measuredValue: 2.0)
-        }
-    }
-
-    /// A green solid indicator (5) means the electronic battery is fine.
     @Test func batteryGreenSolid_returnsPass() throws {
         let battery = BikeComponent(
             bicycleId: UUID(),
@@ -102,6 +108,51 @@ struct LogInspectionTests {
     }
 }
 
+// MARK: - Interval reset tests
+
+@MainActor
+struct IntervalResetTests {
+
+    let useCase = LogInspectionUseCase()
+
+    @Test func passResetsInterval() {
+        let bicycle = makeBicycle(mileage: 2500)
+        let component = makeChain(installedKm: 0)
+        let updated = useCase.updatedComponentAfterInspection(
+            component, bicycle: bicycle, result: .pass
+        )
+        #expect(updated.installedMileageKm == 2500)
+    }
+
+    @Test func observeResetsInterval() {
+        let bicycle = makeBicycle(mileage: 2500)
+        let component = makeChain(installedKm: 0)
+        let updated = useCase.updatedComponentAfterInspection(
+            component, bicycle: bicycle, result: .observe
+        )
+        #expect(updated.installedMileageKm == 2500)
+    }
+
+    @Test func actionNeededResetsInterval() {
+        let bicycle = makeBicycle(mileage: 2500)
+        let component = makeChain(installedKm: 0)
+        let updated = useCase.updatedComponentAfterInspection(
+            component, bicycle: bicycle, result: .actionNeeded
+        )
+        #expect(updated.installedMileageKm == 2500)
+    }
+
+    @Test func professionalDoesNotResetInterval() {
+        let bicycle = makeBicycle(mileage: 2500)
+        let component = makeChain(installedKm: 0)
+        let updated = useCase.updatedComponentAfterInspection(
+            component, bicycle: bicycle, result: .professional
+        )
+        // The original installedMileageKm should be preserved.
+        #expect(updated.installedMileageKm == 0)
+    }
+}
+
 // MARK: - AssessServiceOptionUseCase tests
 
 @MainActor
@@ -109,9 +160,8 @@ struct AssessServiceOptionTests {
 
     let useCase = AssessServiceOptionUseCase()
 
-    /// Cleaning a chain should be classified as DIY Simple.
-    @Test func cleanChain_returnsDiySimple() throws {
-        let chain = BikeComponent(
+    @Test func easyJobWithoutMissingTools_returnsDiySimple() throws {
+        let component = BikeComponent(
             bicycleId: UUID(),
             name: "Chain Clean",
             category: .chain,
@@ -122,14 +172,12 @@ struct AssessServiceOptionTests {
             estimatedMinutes: 15,
             isSafetyCritical: false
         )
-        let level = try useCase.execute(component: chain)
+        let level = try useCase.execute(component: component)
         #expect(level == .diySimple)
     }
 
-    /// Replacing a bottom bracket requires special tools and consumables
-    /// most cyclists will not keep at home, so it is shop-recommended.
-    @Test func bottomBracketReplacement_returnsShopRecommended() throws {
-        let bb = BikeComponent(
+    @Test func missingTools_returnsShopRecommended() throws {
+        let component = BikeComponent(
             bicycleId: UUID(),
             name: "Bottom Bracket",
             category: .bottomBracket,
@@ -140,11 +188,26 @@ struct AssessServiceOptionTests {
             estimatedMinutes: 60,
             isSafetyCritical: false
         )
-        let level = try useCase.execute(component: bb)
+        let level = try useCase.execute(component: component)
         #expect(level == .shopRecommended)
     }
 
-    /// A safety-critical task at difficulty 3 or above must be shop-required.
+    @Test func notCapable_returnsShopRequired() throws {
+        let component = BikeComponent(
+            bicycleId: UUID(),
+            name: "Wheel Truing",
+            category: .other,
+            installedMileageKm: 0,
+            technicalDifficulty: 5,
+            needsSpecialTools: false,
+            needsConsumables: false,
+            estimatedMinutes: 30,
+            isSafetyCritical: false
+        )
+        let level = try useCase.execute(component: component)
+        #expect(level == .shopRequired)
+    }
+
     @Test func safetyCriticalDifficultyThree_returnsShopRequired() throws {
         let rotor = BikeComponent(
             bicycleId: UUID(),
@@ -160,6 +223,69 @@ struct AssessServiceOptionTests {
         let level = try useCase.execute(component: rotor)
         #expect(level == .shopRequired)
     }
+
+    @Test func invalidDifficulty_throwsIncompleteData() throws {
+        let component = BikeComponent(
+            bicycleId: UUID(),
+            name: "Broken",
+            category: .other,
+            installedMileageKm: 0,
+            technicalDifficulty: 0,
+            needsSpecialTools: false,
+            needsConsumables: false,
+            estimatedMinutes: 10,
+            isSafetyCritical: false
+        )
+        #expect(throws: DomainError.self) {
+            _ = try useCase.execute(component: component)
+        }
+    }
+}
+
+// MARK: - ComponentCategory tests
+
+@MainActor
+struct ComponentCategoryTests {
+
+    @Test func gearCableHiddenOnElectronicDrivetrain() {
+        let bike = makeBicycle(drivetrain: .electronic)
+        #expect(ComponentCategory.gearCable.isAvailable(for: bike) == false)
+    }
+
+    @Test func gearCableShownOnMechanicalDrivetrain() {
+        let bike = makeBicycle(drivetrain: .mechanical)
+        #expect(ComponentCategory.gearCable.isAvailable(for: bike) == true)
+    }
+
+    @Test func rotorHiddenOnRimBrake() {
+        let bike = makeBicycle(brake: .rim)
+        #expect(ComponentCategory.brakeRotor.isAvailable(for: bike) == false)
+    }
+
+    @Test func rotorShownOnDiscBrake() {
+        let bike = makeBicycle(brake: .discHydraulic)
+        #expect(ComponentCategory.brakeRotor.isAvailable(for: bike) == true)
+    }
+
+    @Test func brakePadIsMeasurementOnDiscBrake() {
+        let bike = makeBicycle(brake: .discHydraulic)
+        #expect(ComponentCategory.brakePad.inspectionMethod(for: bike) == .measurement)
+    }
+
+    @Test func brakePadIsVisualOnRimBrake() {
+        let bike = makeBicycle(brake: .rim)
+        #expect(ComponentCategory.brakePad.inspectionMethod(for: bike) == .visual)
+    }
+
+    @Test func chainIsAlwaysMeasurement() {
+        let bike = makeBicycle()
+        #expect(ComponentCategory.chain.inspectionMethod(for: bike) == .measurement)
+    }
+
+    @Test func tyreIsAlwaysVisual() {
+        let bike = makeBicycle()
+        #expect(ComponentCategory.tyre.inspectionMethod(for: bike) == .visual)
+    }
 }
 
 // MARK: - ScheduleMaintenanceUseCase tests
@@ -167,36 +293,25 @@ struct AssessServiceOptionTests {
 @MainActor
 struct ScheduleMaintenanceTests {
 
-    /// A chain that has not yet reached its interval should not produce a task.
     @Test func chainNotYetDue_returnsNilTask() throws {
         let bicycle = makeBicycle(mileage: 500)
         let chain = makeChain(installedKm: 0, intervalKm: 2000)
         let useCase = ScheduleMaintenanceUseCase()
 
-        let task = try useCase.execute(
-            for: chain,
-            on: bicycle,
-            existingTasks: []
-        )
+        let task = try useCase.execute(for: chain, on: bicycle, existingTasks: [])
         #expect(task == nil)
     }
 
-    /// A chain that has passed its interval should produce a task.
     @Test func chainDueByMileage_createsTask() throws {
         let bicycle = makeBicycle(mileage: 2500)
         let chain = makeChain(installedKm: 0, intervalKm: 2000)
         let useCase = ScheduleMaintenanceUseCase()
 
-        let task = try useCase.execute(
-            for: chain,
-            on: bicycle,
-            existingTasks: []
-        )
+        let task = try useCase.execute(for: chain, on: bicycle, existingTasks: [])
         #expect(task != nil)
         #expect(task?.taskType == .inspection)
     }
 
-    /// Scheduling twice for the same component should be rejected.
     @Test func duplicateTask_throwsDuplicateError() throws {
         let bicycle = makeBicycle(mileage: 2500)
         let chain = makeChain(installedKm: 0, intervalKm: 2000)
@@ -212,11 +327,33 @@ struct ScheduleMaintenanceTests {
         )
 
         #expect(throws: DomainError.self) {
-            _ = try useCase.execute(
-                for: chain,
-                on: bicycle,
-                existingTasks: [existing]
-            )
+            _ = try useCase.execute(for: chain, on: bicycle, existingTasks: [existing])
         }
+    }
+}
+
+// MARK: - Action text tests
+
+@MainActor
+struct ActionTextTests {
+
+    @Test func actionNeededWithShop_returnsShopWhenConvenient() {
+        #expect(InspectionResult.actionNeeded.actionText(needsShop: true)
+                == "Shop when convenient")
+    }
+
+    @Test func actionNeededWithoutShop_returnsReplaceWhenConvenient() {
+        #expect(InspectionResult.actionNeeded.actionText(needsShop: false)
+                == "Replace when convenient")
+    }
+
+    @Test func professionalWithShop_returnsVisitShopNow() {
+        #expect(InspectionResult.professional.actionText(needsShop: true)
+                == "Visit shop now")
+    }
+
+    @Test func professionalWithoutShop_returnsReplaceNow() {
+        #expect(InspectionResult.professional.actionText(needsShop: false)
+                == "Replace now")
     }
 }

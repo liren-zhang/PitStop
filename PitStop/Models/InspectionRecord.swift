@@ -44,3 +44,44 @@ struct InspectionRecord: Identifiable, Codable, Equatable {
         self.notes = notes
     }
 }
+
+// MARK: - User-facing text
+
+extension InspectionResult {
+
+    /// The action the user should take, given whether a shop is needed.
+    ///
+    /// `actionNeeded` means "deal with this soon, at your convenience".
+    /// `professional` means "deal with this now".
+    ///
+    /// Whether the action is a shop visit or a replacement depends on
+    /// the service level, which the caller passes in via `needsShop`.
+    func actionText(needsShop: Bool) -> String {
+        switch self {
+        case .pass:
+            return "All good"
+        case .observe:
+            return "Keep an eye on it"
+        case .actionNeeded:
+            return needsShop ? "Shop when convenient" : "Replace when convenient"
+        case .professional:
+            return needsShop ? "Visit shop now" : "Replace now"
+        }
+    }
+
+    /// Whether the component's service interval should be reset after
+    /// an inspection with this result.
+    ///
+    /// `pass`, `observe` and `actionNeeded` all reset the interval,
+    /// because the check has been carried out. Only `professional`
+    /// leaves the interval running, since the problem has not yet been
+    /// resolved.
+    var resetsInterval: Bool {
+        switch self {
+        case .pass, .observe, .actionNeeded:
+            return true
+        case .professional:
+            return false
+        }
+    }
+}

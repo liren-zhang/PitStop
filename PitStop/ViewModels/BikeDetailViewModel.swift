@@ -9,9 +9,6 @@ import Foundation
 import Combine
 
 /// A component paired with its current service status.
-///
-/// Used by the bike detail screen to display each component with the
-/// correct badge and reminder text.
 struct ComponentWithStatus: Identifiable {
     let id: UUID
     let component: BikeComponent
@@ -25,10 +22,6 @@ struct ComponentWithStatus: Identifiable {
 }
 
 /// ViewModel for the bike detail screen.
-///
-/// Loads the components of a specific bicycle, computes each one's service
-/// status, and exposes them for display. Also handles adding new components
-/// and creating scheduled tasks.
 @MainActor
 final class BikeDetailViewModel: ObservableObject {
 
@@ -38,7 +31,7 @@ final class BikeDetailViewModel: ObservableObject {
     @Published var errorMessage: String?
 
     // MARK: - Context
-    let bicycle: Bicycle
+    var bicycle: Bicycle
 
     // MARK: - Dependencies
     private let repository: BikeRepository
@@ -59,7 +52,6 @@ final class BikeDetailViewModel: ObservableObject {
 
     // MARK: - Loading
 
-    /// Load components and tasks, then compute statuses.
     func load() {
         errorMessage = nil
         do {
@@ -79,7 +71,6 @@ final class BikeDetailViewModel: ObservableObject {
 
     // MARK: - Mutations
 
-    /// Add a new component to this bike.
     func addComponent(
         name: String,
         category: ComponentCategory,
@@ -113,7 +104,6 @@ final class BikeDetailViewModel: ObservableObject {
         }
     }
 
-    /// Schedule an inspection for a component that is due.
     func scheduleInspection(for component: BikeComponent) {
         do {
             if let task = try scheduleUseCase.execute(
@@ -131,7 +121,6 @@ final class BikeDetailViewModel: ObservableObject {
         }
     }
 
-    /// Delete a component.
     func deleteComponent(_ component: BikeComponent) {
         do {
             try repository.deleteComponent(id: component.id)
@@ -141,14 +130,73 @@ final class BikeDetailViewModel: ObservableObject {
         }
     }
 
+    /// Add a completed ride to the bicycle's total mileage.
+    func addRide(_ distanceKm: Double) {
+        guard distanceKm > 0 else { return }
+        let newTotal = bicycle.currentMileageKm + distanceKm
+        do {
+            try repository.updateMileage(forBicycle: bicycle.id, newMileageKm: newTotal)
+            bicycle.currentMileageKm = newTotal
+            load()
+        } catch {
+            errorMessage = "Could not record the ride. Please try again."
+        }
+    }
+
+    /// Update the total mileage directly (used to correct mistakes).
+    func updateMileage(_ newMileageKm: Double) {
+        do {
+            try repository.updateMileage(forBicycle: bicycle.id, newMileageKm: newMileageKm)
+            bicycle.currentMileageKm = newMileageKm
+            load()
+        } catch {
+            errorMessage = "Could not update the mileage. Please try again."
+        }
+    }
+
+    /// Replace a component with a new one in a single step.
+    func replaceComponent(
+        _ oldComponent: BikeComponent,
+        withName name: String,
+        category: ComponentCategory,
+        installedMileageKm: Double,
+        serviceIntervalKm: Double?,
+        serviceIntervalDays: Int?,
+        technicalDifficulty: Int,
+        needsSpecialTools: Bool,
+        needsConsumables: Bool,
+        estimatedMinutes: Int,
+        isSafetyCritical: Bool
+    ) {
+        do {
+            try repository.deleteComponent(id: oldComponent.id)
+
+            let newComponent = BikeComponent(
+                bicycleId: bicycle.id,
+                name: name,
+                category: category,
+                installedMileageKm: bicycle.currentMileageKm,
+                serviceIntervalKm: serviceIntervalKm,
+                serviceIntervalDays: serviceIntervalDays,
+                technicalDifficulty: technicalDifficulty,
+                needsSpecialTools: needsSpecialTools,
+                needsConsumables: needsConsumables,
+                estimatedMinutes: estimatedMinutes,
+                isSafetyCritical: isSafetyCritical
+            )
+            try repository.addComponent(newComponent)
+            load()
+        } catch {
+            errorMessage = "Could not replace the component. Please try again."
+        }
+    }
+
     // MARK: - Derived data
 
-    /// Service level for a given component, computed via the use case.
     func serviceLevel(for component: BikeComponent) -> ServiceLevel? {
         try? assessUseCase.execute(component: component)
     }
 
-    /// Count of components that are due or overdue.
     var dueCount: Int {
         components.filter {
             if case .ok = $0.status { return false }

@@ -72,3 +72,22 @@ enum ServiceLevel: String, Codable, CaseIterable, Identifiable {
         }
     }
 }
+
+// MARK: - Shop decision
+
+extension ServiceLevel {
+
+    /// Whether this level means the work should go to a shop.
+    ///
+    /// `diySimple` and `diyWithTools` are handled at home.
+    /// `shopRecommended` and `shopRequired` mean a shop is the right
+    /// place — either because it is easier, or because it is necessary.
+    var needsShop: Bool {
+        switch self {
+        case .diySimple, .diyWithTools:
+            return false
+        case .shopRecommended, .shopRequired:
+            return true
+        }
+    }
+}

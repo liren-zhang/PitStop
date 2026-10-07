@@ -101,3 +101,35 @@ struct LogInspectionUseCase {
         }
     }
 }
+
+// MARK: - Interval reset
+
+extension LogInspectionUseCase {
+
+    /// Return an updated copy of a component with its service interval
+    /// reset, if the inspection result allows it.
+    ///
+    /// `pass`, `observe` and `actionNeeded` all reset the interval —
+    /// the check has been done, so the countdown starts again. Only
+    /// `professional` leaves the interval running, because the problem
+    /// has not yet been resolved and the reminder should stay active.
+    ///
+    /// - Parameters:
+    ///   - component: The component that was just inspected.
+    ///   - bicycle: The bicycle it belongs to (provides the current mileage).
+    ///   - result: The result returned by `execute`.
+    /// - Returns: A copy of the component with updated install date and
+    ///   mileage, or the original component if no reset is required.
+    func updatedComponentAfterInspection(
+        _ component: BikeComponent,
+        bicycle: Bicycle,
+        result: InspectionResult
+    ) -> BikeComponent {
+        guard result.resetsInterval else { return component }
+
+        var updated = component
+        updated.installedMileageKm = bicycle.currentMileageKm
+        updated.installedDate = Date()
+        return updated
+    }
+}

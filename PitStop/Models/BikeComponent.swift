@@ -114,3 +114,88 @@ struct BikeComponent: Identifiable, Codable, Equatable {
         self.isSafetyCritical = isSafetyCritical
     }
 }
+
+// MARK: - Inspection method
+
+/// How a component should be inspected.
+///
+/// Determined by the component's category, and — for brake pads — by the
+/// bicycle's brake type. Disc brakes are measured with a caliper (objective),
+/// rim brakes are checked visually against the wear line (subjective).
+enum InspectionMethod {
+    /// Objective measurement: the user enters a value or gear position,
+    /// and the use case decides the result.
+    case measurement
+    /// Subjective check: the user selects the result directly.
+    case visual
+}
+
+// MARK: - ComponentCategory extensions
+
+extension ComponentCategory {
+
+    /// Whether this component type exists on a given bicycle.
+    ///
+    /// Used by the Add Component screen to hide options that do not apply,
+    /// for example the gear cable on an electronic groupset, or the rotor
+    /// on a rim-brake bike.
+    func isAvailable(for bicycle: Bicycle) -> Bool {
+        switch self {
+        case .gearCable:
+            return bicycle.drivetrainType == .mechanical
+        case .brakeCable:
+            return bicycle.brakeType == .discMechanical
+                || bicycle.brakeType == .rim
+        case .brakeRotor:
+            return bicycle.brakeType == .discHydraulic
+                || bicycle.brakeType == .discMechanical
+        case .brakePad, .battery:
+            // Brake pads exist on every brake type. "Battery" also covers
+            // headlights, power meters, and other rechargeable accessories.
+            return true
+        default:
+            return true
+        }
+    }
+
+    /// How this component type is inspected on a given bicycle.
+    func inspectionMethod(for bicycle: Bicycle) -> InspectionMethod {
+        switch self {
+        case .chain, .brakeRotor, .battery:
+            return .measurement
+
+        case .brakePad:
+            switch bicycle.brakeType {
+            case .discHydraulic, .discMechanical:
+                return .measurement      // 卡尺测厚度
+            case .rim:
+                return .visual           // 看磨损线
+            }
+
+        case .cassette, .chainring, .tyre,
+             .gearCable, .brakeCable,
+             .bottomBracket, .hubBearing, .other:
+            return .visual
+        }
+    }
+}
+
+// MARK: - Difficulty label
+
+extension BikeComponent {
+
+    /// User-facing description of the difficulty rating.
+    ///
+    /// The rating is subjective: the user picks how confident they feel
+    /// about doing this job themselves, from 1 (anyone can do it) to
+    /// 5 (not capable).
+    var difficultyLabel: String {
+        switch technicalDifficulty {
+        case 1: return "Anyone can do it"
+        case 2: return "Confident"
+        case 3: return "Careful"
+        case 4: return "Need guidance"
+        default: return "Not capable"
+        }
+    }
+}
