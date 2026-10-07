@@ -337,23 +337,19 @@ struct ScheduleMaintenanceTests {
 @MainActor
 struct ActionTextTests {
 
-    @Test func actionNeededWithShop_returnsShopWhenConvenient() {
-        #expect(InspectionResult.actionNeeded.actionText(needsShop: true)
-                == "Shop when convenient")
+    @Test func pass_returnsAllGood() {
+        #expect(InspectionResult.pass.actionText == "All good")
     }
 
-    @Test func actionNeededWithoutShop_returnsReplaceWhenConvenient() {
-        #expect(InspectionResult.actionNeeded.actionText(needsShop: false)
-                == "Replace when convenient")
+    @Test func observe_returnsKeepAnEyeOnIt() {
+        #expect(InspectionResult.observe.actionText == "Keep an eye on it")
     }
 
-    @Test func professionalWithShop_returnsVisitShopNow() {
-        #expect(InspectionResult.professional.actionText(needsShop: true)
-                == "Visit shop now")
+    @Test func actionNeeded_returnsReplaceWhenConvenient() {
+        #expect(InspectionResult.actionNeeded.actionText == "Replace when convenient")
     }
 
-    @Test func professionalWithoutShop_returnsReplaceNow() {
-        #expect(InspectionResult.professional.actionText(needsShop: false)
-                == "Replace now")
+    @Test func professional_returnsReplaceNow() {
+        #expect(InspectionResult.professional.actionText == "Replace now")
     }
 }

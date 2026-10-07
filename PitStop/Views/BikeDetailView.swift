@@ -204,9 +204,12 @@ struct BikeDetailView: View {
             Spacer()
 
             if let level = viewModel.serviceLevel(for: item.component) {
-                Image(systemName: level.iconName)
+                Text(level.displayName)
+                    .font(.caption2.bold())
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(level.color.opacity(0.2), in: Capsule())
                     .foregroundStyle(level.color)
-                    .font(.caption)
             }
         }
         .padding(.vertical, 4)

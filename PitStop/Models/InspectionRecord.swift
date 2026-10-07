@@ -11,8 +11,8 @@ import Foundation
 enum InspectionResult: String, Codable {
     case pass           // 正常，无需操作
     case observe        // 观察，下次再检查
-    case actionNeeded   // 建议处理（例如更换链条）
-    case professional   // 必须去车店
+    case actionNeeded   // 择时更换
+    case professional   // 立即更换
 }
 
 /// A recorded inspection of a component.
@@ -24,7 +24,7 @@ struct InspectionRecord: Identifiable, Codable, Equatable {
     let id: UUID
     var componentId: UUID
     var date: Date
-    var recordedValue: Double?     // 例如链条拉伸百分比、刹车片厚度 mm
+    var recordedValue: Double?
     var result: InspectionResult
     var notes: String
 
@@ -49,23 +49,17 @@ struct InspectionRecord: Identifiable, Codable, Equatable {
 
 extension InspectionResult {
 
-    /// The action the user should take, given whether a shop is needed.
+    /// The action the user should take.
     ///
-    /// `actionNeeded` means "deal with this soon, at your convenience".
-    /// `professional` means "deal with this now".
-    ///
-    /// Whether the action is a shop visit or a replacement depends on
-    /// the service level, which the caller passes in via `needsShop`.
-    func actionText(needsShop: Bool) -> String {
+    /// The wording deliberately avoids mentioning shops or DIY, so the
+    /// same record reads well whether the user plans to do the work at
+    /// home or take the part in later.
+    var actionText: String {
         switch self {
-        case .pass:
-            return "All good"
-        case .observe:
-            return "Keep an eye on it"
-        case .actionNeeded:
-            return needsShop ? "Shop when convenient" : "Replace when convenient"
-        case .professional:
-            return needsShop ? "Visit shop now" : "Replace now"
+        case .pass:         return "All good"
+        case .observe:      return "Keep an eye on it"
+        case .actionNeeded: return "Replace when convenient"
+        case .professional: return "Replace now"
         }
     }
 

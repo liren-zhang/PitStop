@@ -31,33 +31,28 @@ struct LogInspectionView: View {
 
     var body: some View {
         Form {
-            // MARK: Component info
             Section("Component") {
                 LabeledContent("Name", value: viewModel.component.name)
                 LabeledContent("Category", value: viewModel.component.category.displayName)
             }
 
-            // MARK: Input (differs by mode)
             if viewModel.isMeasurementMode {
                 measurementSection
             } else {
                 visualSection
             }
 
-            // MARK: Preview (measurement only)
             if viewModel.isMeasurementMode, let preview = viewModel.previewResult {
                 Section("Preview") {
                     resultRow(preview)
                 }
             }
 
-            // MARK: Notes
             Section("Notes") {
                 TextField("Optional notes", text: $viewModel.notes, axis: .vertical)
                     .lineLimit(2...5)
             }
 
-            // MARK: Error
             if let error = viewModel.errorMessage {
                 Section {
                     Text(error)
@@ -66,7 +61,6 @@ struct LogInspectionView: View {
                 }
             }
 
-            // MARK: History
             if !viewModel.history.isEmpty {
                 Section("Recent History") {
                     ForEach(viewModel.history.prefix(5)) { record in
@@ -75,7 +69,6 @@ struct LogInspectionView: View {
                 }
             }
 
-            // MARK: Save
             Section {
                 Button {
                     if viewModel.save() {
@@ -190,7 +183,7 @@ struct LogInspectionView: View {
         if viewModel.isMeasurementMode {
             return !viewModel.recordedValueText.isEmpty
         }
-        return true   // visual mode always has a selected result
+        return true
     }
 
     // MARK: - Result formatting
@@ -200,7 +193,7 @@ struct LogInspectionView: View {
         case .pass:         return "checkmark.circle.fill"
         case .observe:      return "clock.fill"
         case .actionNeeded: return "exclamationmark.circle.fill"
-        case .professional: return "building.2.fill"
+        case .professional: return "exclamationmark.triangle.fill"
         }
     }
 
@@ -217,21 +210,21 @@ struct LogInspectionView: View {
         switch result {
         case .pass:         return "All good"
         case .observe:      return "Keep an eye on it"
-        case .actionNeeded: return "Shop when convenient"
-        case .professional: return "Visit shop now"
+        case .actionNeeded: return "Replace when convenient"
+        case .professional: return "Replace now"
         }
     }
 
     private func subtitleFor(_ result: InspectionResult) -> String {
         switch result {
         case .pass:
-            return "Nothing to do. Next check will start from today."
+            return "Nothing to do. The next check starts from today."
         case .observe:
             return "Still usable, but check again at the next reminder."
         case .actionNeeded:
-            return "Plan the work soon — not urgent yet."
+            return "Plan the replacement soon — not urgent yet."
         case .professional:
-            return "Deal with this right away. The reminder will stay active."
+            return "Replace right away. The reminder will stay active."
         }
     }
 }
@@ -245,9 +238,9 @@ struct LogInspectionView: View {
                 category: .chain,
                 installedMileageKm: 0,
                 technicalDifficulty: 2,
-                needsSpecialTools: true,
-                needsConsumables: true,
-                estimatedMinutes: 30,
+                needsSpecialTools: false,
+                needsConsumables: false,
+                estimatedMinutes: 15,
                 isSafetyCritical: false
             ),
             bicycle: Bicycle(
